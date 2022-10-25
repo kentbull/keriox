@@ -10,6 +10,7 @@ pub mod prefix;
 pub mod processor;
 pub mod signer;
 pub mod state;
+pub mod daemon;
 
 #[cfg(feature = "query")]
 pub mod query;
