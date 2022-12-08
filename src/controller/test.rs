@@ -1,5 +1,5 @@
 #[cfg(feature = "wallet")]
-use universal_wallet::prelude::UnlockedWallet;
+use universal_wallet::{contents::Content, prelude::*};
 
 #[cfg(test)]
 use crate::{database::sled::SledEventDatabase, error::Error, controller::BaseController};
@@ -30,7 +30,7 @@ fn test_direct_mode() -> Result<(), Error> {
         #[cfg(feature = "wallet")]
         {
             let mut alice_key_manager = UnlockedWallet::new("alice");
-            crate::signer::wallet::incept_keys(&mut alice_key_manager)?;
+            crate::signer::wallet::incept_keys(&mut alice_key_manager, universal_wallet::prelude::KeyType::Ed25519VerificationKey2018)?;
             Arc::new(Mutex::new(alice_key_manager))
         }
         #[cfg(not(feature = "wallet"))]
@@ -51,7 +51,7 @@ fn test_direct_mode() -> Result<(), Error> {
         #[cfg(feature = "wallet")]
         {
             let mut bob_key_manager = UnlockedWallet::new("alice");
-            crate::signer::wallet::incept_keys(&mut bob_key_manager)?;
+            crate::signer::wallet::incept_keys(&mut bob_key_manager, Ed25519VerificationKey2018)?;
             Arc::new(Mutex::new(bob_key_manager))
         }
         #[cfg(not(feature = "wallet"))]

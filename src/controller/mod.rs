@@ -32,7 +32,7 @@ use crate::{
     state::{EventSemantics, IdentifierState},
 };
 #[cfg(feature = "wallet")]
-use universal_wallet::prelude::{Content, UnlockedWallet};
+use universal_wallet::{contents::Content, prelude::*};
 
 #[cfg(test)]
 mod test;
@@ -59,7 +59,7 @@ impl BaseController<UnlockedWallet> {
         };
         // instantiate wallet with random ID instead of static for security reasons
         let mut wallet = UnlockedWallet::new(&generate_random_string());
-        incept_keys(&mut wallet)?;
+        incept_keys(&mut wallet, Ed25519VerificationKey2018)?;
         let pk = match wallet.get_key(CURRENT).unwrap().content {
             Content::PublicKey(pk) => pk.public_key,
             Content::KeyPair(kp) => kp.public_key.public_key,
@@ -68,7 +68,7 @@ impl BaseController<UnlockedWallet> {
             }
         };
         let prefix =
-            IdentifierPrefix::Basic(BasicPrefix::new(Basic::ECDSAsecp256k1, PublicKey::new(pk)));
+            IdentifierPrefix::Basic(BasicPrefix::new(Basic::Ed25519, PublicKey::new(pk)));
         // setting wallet's ID to prefix of identity instead of random string
         wallet.id = prefix.to_str();
         Ok(BaseController {

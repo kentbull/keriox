@@ -4,21 +4,18 @@ use universal_wallet::{contents::Content, prelude::*};
 
 pub const CURRENT: &str = "current";
 const NEXT: &str = "next";
-pub const CRYPTO: &str = "crypto";
 
 /// Helper function to populate wallet with properly tagged
 /// signing and crypto key pairs
-///
-pub fn incept_keys(wallet: &mut UnlockedWallet) -> Result<(), Error> {
+pub fn incept_keys(wallet: &mut UnlockedWallet, key_type: KeyType) -> Result<(), Error> {
     let mut current = KeyPair::random_pair(KeyType::Ed25519VerificationKey2018)?;
     current.public_key.controller = vec![CURRENT.into()];
     wallet.set_content(CURRENT, Content::KeyPair(current));
+
     let mut next = KeyPair::random_pair(KeyType::Ed25519VerificationKey2018)?;
     next.public_key.controller = vec![NEXT.into()];
     wallet.set_content(NEXT, Content::KeyPair(next));
-    let mut crypto = KeyPair::random_pair(KeyType::X25519KeyAgreementKey2019)?;
-    crypto.public_key.controller = vec![CRYPTO.into()];
-    wallet.set_content(CRYPTO, Content::KeyPair(crypto));
+
     Ok(())
 }
 
@@ -81,7 +78,7 @@ impl KeyManager for UnlockedWallet {
 #[test]
 fn key_inception_test() {
     let mut wallet = UnlockedWallet::new("test");
-    incept_keys(&mut wallet).unwrap();
+    incept_keys(&mut wallet, Ed25519VerificationKey2018).unwrap();
     // check next
     let next = wallet.get_content_by_controller(NEXT);
     assert!(next.is_some());
@@ -96,13 +93,5 @@ fn key_inception_test() {
     match current.unwrap() {
         Content::KeyPair(_) => (),
         _ => panic!("current is not a KeyPair!"),
-    }
-
-    // check crypto
-    let crypto = wallet.get_content_by_controller(CRYPTO);
-    assert!(crypto.is_some());
-    match crypto.unwrap() {
-        Content::KeyPair(_) => (),
-        _ => panic!("crypto is not a KeyPair!"),
     }
 }
