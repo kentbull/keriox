@@ -2,7 +2,7 @@
 use universal_wallet::prelude::UnlockedWallet;
 
 #[cfg(test)]
-use crate::{database::sled::SledEventDatabase, error::Error, keri::Keri};
+use crate::{database::sled::SledEventDatabase, error::Error, controller::BaseController};
 use crate::{
     event_message::signed_event_message::Message, event_parsing::message::signed_event_stream,
 };
@@ -41,7 +41,7 @@ fn test_direct_mode() -> Result<(), Error> {
     };
 
     // Init alice.
-    let mut alice = Keri::new(Arc::clone(&db_alice), alice_key_manager.clone())?;
+    let mut alice = BaseController::new(Arc::clone(&db_alice), alice_key_manager.clone())?;
 
     assert_eq!(alice.get_state()?, None);
 
@@ -63,7 +63,7 @@ fn test_direct_mode() -> Result<(), Error> {
     //}
 
     // Init bob.
-    let mut bob = Keri::new(Arc::clone(&db_bob), bob_key_manager.clone())?;
+    let mut bob = BaseController::new(Arc::clone(&db_bob), bob_key_manager.clone())?;
 
     bob.incept(None).unwrap();
     let bob_state = bob.get_state()?;
@@ -177,7 +177,7 @@ fn test_qry_rpy() -> Result<(), Error> {
     use crate::{
         derivation::{self_addressing::SelfAddressing, self_signing::SelfSigning},
         event::SerializationFormats,
-        keri::witness::Witness,
+        controller::witness::Witness,
         prefix::AttachedSignaturePrefix,
         query::{
             query::{QueryEvent, SignedQuery},
@@ -201,7 +201,7 @@ fn test_qry_rpy() -> Result<(), Error> {
     }));
 
     // Init alice.
-    let mut alice = Keri::new(Arc::clone(&alice_db), Arc::clone(&alice_key_manager))?;
+    let mut alice = BaseController::new(Arc::clone(&alice_db), Arc::clone(&alice_key_manager))?;
 
     let bob_key_manager = Arc::new(Mutex::new({
         use crate::signer::CryptoBox;
@@ -209,7 +209,7 @@ fn test_qry_rpy() -> Result<(), Error> {
     }));
 
     // Init bob.
-    let mut bob = Keri::new(Arc::clone(&bob_db), Arc::clone(&bob_key_manager))?;
+    let mut bob = BaseController::new(Arc::clone(&bob_db), Arc::clone(&bob_key_manager))?;
 
     let bob_icp = bob.incept(None).unwrap();
     // bob.rotate().unwrap();
@@ -265,7 +265,7 @@ fn test_qry_rpy() -> Result<(), Error> {
 #[test]
 pub fn test_key_state_notice() -> Result<(), Error> {
     use crate::{
-        keri::witness::Witness, processor::EventProcessor, query::QueryError, signer::CryptoBox,
+        controller::witness::Witness, processor::EventProcessor, query::QueryError, signer::CryptoBox,
     };
     use tempfile::Builder;
 
@@ -284,7 +284,7 @@ pub fn test_key_state_notice() -> Result<(), Error> {
         let db = Arc::new(SledEventDatabase::new(root.path()).unwrap());
 
         let bob_key_manager = Arc::new(Mutex::new(CryptoBox::new()?));
-        Keri::new(Arc::clone(&db), Arc::clone(&bob_key_manager))?
+        BaseController::new(Arc::clone(&db), Arc::clone(&bob_key_manager))?
     };
 
     let alice = {

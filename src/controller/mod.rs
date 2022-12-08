@@ -38,21 +38,21 @@ use universal_wallet::prelude::{Content, UnlockedWallet};
 mod test;
 #[cfg(feature = "query")]
 pub mod witness;
-pub struct Keri<K: KeyManager + 'static> {
+pub struct BaseController<K: KeyManager + 'static> {
     prefix: IdentifierPrefix,
     key_manager: Arc<Mutex<K>>,
     processor: EventProcessor,
 }
 
 #[cfg(feature = "wallet")]
-impl Keri<UnlockedWallet> {
+impl BaseController<UnlockedWallet> {
     /// Instantiates KERI with freshly created and pre-populated wallet
     /// Wallet has ECDSA and X25519 key pairs
     /// Only available with crate `wallet` feature.
     ///
     pub fn new_with_fresh_wallet(
         db: Arc<SledEventDatabase>,
-    ) -> Result<Keri<UnlockedWallet>, Error> {
+    ) -> Result<BaseController<UnlockedWallet>, Error> {
         use crate::{
             prefix::Prefix,
             signer::wallet::{incept_keys, CURRENT},
@@ -71,7 +71,7 @@ impl Keri<UnlockedWallet> {
             IdentifierPrefix::Basic(BasicPrefix::new(Basic::ECDSAsecp256k1, PublicKey::new(pk)));
         // setting wallet's ID to prefix of identity instead of random string
         wallet.id = prefix.to_str();
-        Ok(Keri {
+        Ok(BaseController {
             prefix,
             key_manager: Arc::new(Mutex::new(wallet)),
             processor: EventProcessor::new(db),
@@ -79,10 +79,10 @@ impl Keri<UnlockedWallet> {
     }
 }
 
-impl<K: KeyManager> Keri<K> {
+impl<K: KeyManager> BaseController<K> {
     // incept a state and keys
-    pub fn new(db: Arc<SledEventDatabase>, key_manager: Arc<Mutex<K>>) -> Result<Keri<K>, Error> {
-        Ok(Keri {
+    pub fn new(db: Arc<SledEventDatabase>, key_manager: Arc<Mutex<K>>) -> Result<BaseController<K>, Error> {
+        Ok(BaseController {
             prefix: IdentifierPrefix::default(),
             key_manager,
             processor: EventProcessor::new(db),

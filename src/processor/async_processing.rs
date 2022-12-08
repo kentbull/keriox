@@ -3,7 +3,7 @@ use crate::{
         attachment::b64_count, message::message, message::version, payload_size::PayloadType,
         SignedEventData,
     },
-    keri::Keri,
+    controller::BaseController,
     prefix::IdentifierPrefix,
     signer::KeyManager,
 };
@@ -20,7 +20,7 @@ use std::{convert::TryFrom, future::Future, pin::Pin, sync::Arc};
 pub type Result<T> = std::result::Result<T, String>;
 
 pub async fn process<R, W, K>(
-    keri: Arc<Keri<K>>,
+    keri: Arc<BaseController<K>>,
     reader: &mut R,
     writer: &mut W,
     first_byte: u8,
@@ -38,7 +38,7 @@ where
         #[pin]
         writer: W,
         #[pin]
-        keri: Arc<Keri<K>>,
+        keri: Arc<BaseController<K>>,
         #[pin]
         respond_to: Sender<(IdentifierPrefix, Vec<u8>)>,
         first_byte: u8,
@@ -170,7 +170,7 @@ where
     // let path = Path::new("./keri.db");
     // let db = SledEventDatabase::new(path).map_err(|e| e.to_string())?;
     // let cb = CryptoBox::new().map_err(|e| e.to_string())?;
-    // let keri = Keri::new(&db, cb, IdentifierPrefix::default()).map_err(|e| e.to_string())?;
+    // let controller = BaseController::new(&db, cb, IdentifierPrefix::default()).map_err(|e| e.to_string())?;
     let processor = Processor {
         reader: BufReader::new(reader),
         writer,

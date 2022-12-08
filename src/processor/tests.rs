@@ -464,7 +464,7 @@ pub fn test_reply_escrow() -> Result<(), Error> {
 #[cfg(feature = "query")]
 #[test]
 pub fn test_query() -> Result<(), Error> {
-    use crate::{keri::witness::Witness, query::ReplyType};
+    use crate::{controller::witness::Witness, query::ReplyType};
     use tempfile::Builder;
 
     let root = Builder::new().prefix("test-db").tempdir().unwrap();
