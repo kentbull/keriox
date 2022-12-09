@@ -2,6 +2,7 @@ use std::{
     convert::TryFrom,
     sync::{Arc, Mutex},
 };
+use simplelog::*;
 
 use crate::{
     database::sled::SledEventDatabase,
@@ -109,9 +110,18 @@ impl<K: KeyManager> BaseController<K> {
 
     pub fn process(&self, id: &IdentifierPrefix, event: impl EventSemantics) -> Result<(), Error> {
         match self.processor.process_actual_event(id, event) {
-            Ok(Some(_)) => Ok(()),
-            Ok(None) => Err(Error::SemanticError("Unknown identifier.".into())),
-            Err(e) => Err(e),
+            Ok(Some(identifier_state)) => {
+                debug!("Processing event for identifier {:?}\n\nIdentifier State {:?}", id, identifier_state);
+                Ok(())
+            },
+            Ok(None) => {
+                debug!("Semantic error for identifier {:?}", id);
+                Err(Error::SemanticError("Unknown identifier.".into()))
+            },
+            Err(e) => {
+                debug!("Event processing error on identifier {:?}\nError: {:?}", id, e);
+                Err(e)
+            },
         }
     }
 
@@ -155,12 +165,14 @@ impl<K: KeyManager> BaseController<K> {
     ///
     pub fn incept_with_extra_keys(
         &mut self,
+        initial_witnesses: Option<Vec<BasicPrefix>>,
         extra_keys: impl IntoIterator<Item = (Basic, PublicKey)>,
     ) -> Result<SignedEventMessage, Error> {
         let mut keys: Vec<BasicPrefix> = extra_keys
             .into_iter()
             .map(|(key_type, key)| key_type.derive(key))
             .collect();
+
         // Signing key must be first
         let km = self.key_manager.lock().map_err(|_| Error::MutexPoisoned)?;
         keys.insert(0, Basic::Ed25519.derive(km.public_key()));
@@ -168,6 +180,7 @@ impl<K: KeyManager> BaseController<K> {
             .with_prefix(&self.prefix)
             .with_keys(keys)
             .with_next_keys(vec![Basic::Ed25519.derive(km.next_public_key())])
+            .with_witness_list(&initial_witnesses.unwrap_or_default())
             .build()?;
 
         let signed = icp.sign(
@@ -184,8 +197,8 @@ impl<K: KeyManager> BaseController<K> {
         Ok(signed)
     }
 
-    /// Interacts with peer identifier via generation of a `Seal`
-    /// Seal gets added to our KEL db and returned back as `SignedEventMessage`
+    /// Interacts with peer identifier via generation of a [Seal]
+    /// Seal gets added to our KEL db and returned back as [SignedEventMessage]
     ///
     pub fn interact(&self, peer: IdentifierPrefix) -> Result<SignedEventMessage, Error> {
         let next_sn = match self.processor.db.get_kel_finalized_events(&self.prefix) {

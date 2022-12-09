@@ -275,9 +275,8 @@ impl EventProcessor {
 
     /// Process Event
     ///
-    /// Validates a Key Event against the latest state
-    /// of the Identifier and applies it to update the state
-    /// returns the updated state
+    /// Validates a Key Event against the latest state of the Identifier and applies it to update
+    /// the state and returns the updated state.
     /// TODO improve checking and handling of errors!
     pub fn process_event(
         &self,
